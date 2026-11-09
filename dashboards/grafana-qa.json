@@ -16,7 +16,7 @@
   "version": 1,
   "refresh": "",
   "time": {
-    "from": "now-90d",
+    "from": "now-30d",
     "to": "now"
   },
   "description": "Playwright UI + API results pushed from GitHub Actions (weekly Monday 15:00 ART).",
@@ -65,7 +65,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "last_over_time(playwright_run_pass_rate{suite=~\"$suite\"}[90d])",
+          "expr": "last_over_time(playwright_run_pass_rate{suite=~\"$suite\"}[30d])",
           "legendFormat": "{{suite}}",
           "refId": "A",
           "instant": true,
@@ -125,7 +125,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "last_over_time(playwright_run_failed{suite=~\"$suite\"}[90d])",
+          "expr": "last_over_time(playwright_run_failed{suite=~\"$suite\"}[30d])",
           "legendFormat": "{{suite}}",
           "refId": "A",
           "instant": true,
@@ -181,7 +181,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "last_over_time(playwright_run_flaky{suite=~\"$suite\"}[90d])",
+          "expr": "last_over_time(playwright_run_flaky{suite=~\"$suite\"}[30d])",
           "legendFormat": "{{suite}}",
           "refId": "A",
           "instant": true,
@@ -237,7 +237,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "last_over_time(playwright_run_total{suite=~\"$suite\"}[90d])",
+          "expr": "last_over_time(playwright_run_total{suite=~\"$suite\"}[30d])",
           "legendFormat": "{{suite}}",
           "refId": "A",
           "instant": true,
@@ -591,7 +591,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "last_over_time(playwright_coverage_requirements_pct[90d])",
+          "expr": "last_over_time(playwright_coverage_requirements_pct[30d])",
           "legendFormat": "UI requirement coverage",
           "refId": "A",
           "instant": true,
@@ -652,7 +652,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "last_over_time(playwright_coverage_api_contract_pct[90d])",
+          "expr": "last_over_time(playwright_coverage_api_contract_pct[30d])",
           "legendFormat": "API contract coverage",
           "refId": "A",
           "instant": true,
@@ -713,7 +713,7 @@
             "type": "prometheus",
             "uid": "${DS_PROMETHEUS}"
           },
-          "expr": "last_over_time(playwright_coverage_framework_lines_pct[90d])",
+          "expr": "last_over_time(playwright_coverage_framework_lines_pct[30d])",
           "legendFormat": "Framework code coverage (lines)",
           "refId": "A",
           "instant": true,
