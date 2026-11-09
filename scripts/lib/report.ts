@@ -137,3 +137,26 @@ export function percentile(values: readonly number[], p: number): number {
   const index = Math.min(sorted.length - 1, Math.ceil((p / 100) * sorted.length) - 1);
   return sorted[index] ?? 0;
 }
+
+export interface TargetSecurity {
+  readonly checks: number;
+  /** Titles of the checks that are known, documented gaps (test.fail() still failing). */
+  readonly openGaps: string[];
+}
+
+/**
+ * Live security checks of the "security" suite grouped by target. The target is the first word of
+ * the outermost describe ("swapi security headers"); the offline CSP evaluator tests (@sec-csp)
+ * check our own code, not a target, so they are left out.
+ */
+export function securityByTarget(suite: SuiteReport): Map<string, TargetSecurity> {
+  const byTarget = new Map<string, TargetSecurity>();
+  if (suite.name !== 'security') return byTarget;
+  for (const spec of suite.specs.filter((s) => !s.tags.includes('sec-csp'))) {
+    const target = spec.describes[0]?.split(' ')[0] ?? 'unknown';
+    const entry = byTarget.get(target) ?? { checks: 0, openGaps: [] };
+    entry.openGaps.push(...(spec.openGap ? [spec.title] : []));
+    byTarget.set(target, { checks: entry.checks + 1, openGaps: entry.openGaps });
+  }
+  return byTarget;
+}

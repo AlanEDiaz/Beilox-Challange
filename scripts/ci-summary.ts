@@ -3,7 +3,7 @@
  * Usage: node scripts/ci-summary.ts <dir with results-<suite>/**\/results.json>
  * Runs on Node >= 24 (native type stripping): no build step.
  */
-import { readSuiteReports } from './lib/report.ts';
+import { readSuiteReports, securityByTarget } from './lib/report.ts';
 
 const root = process.argv[2];
 if (root === undefined) {
@@ -34,6 +34,24 @@ if (suites.length === 0) {
     }
   }
   if (details.length > 0) lines.push('', ...details);
+}
+
+// The security suite is green by design while a gap is documented (test.fail()); list the gaps
+// here so a green run is not read as "secure".
+const gaps = suites
+  .flatMap((suite) => [...securityByTarget(suite)])
+  .filter(([, { openGaps }]) => openGaps.length > 0);
+if (gaps.length > 0) {
+  lines.push(
+    '',
+    '## Open security gaps',
+    '',
+    'Known findings in third-party systems we cannot fix. The security suite stays green while they exist. It turns red when one is fixed (then remove it from `tests/security/support/targets.ts`) or when a new one appears.',
+    '',
+  );
+  for (const [target, { openGaps }] of gaps) {
+    lines.push(`**${target}** (${openGaps.length})`, '', ...openGaps.map((t) => `- ${t}`), '');
+  }
 }
 
 console.log(lines.join('\n'));
