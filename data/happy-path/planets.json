@@ -1,0 +1,28 @@
+{
+  "message": "ok",
+  "result": {
+    "properties": {
+      "created": "2026-11-08T23:39:39.614Z",
+      "edited": "2026-11-08T23:39:39.614Z",
+      "climate": "arid",
+      "surface_water": "1",
+      "name": "Tatooine",
+      "diameter": "10465",
+      "rotation_period": "23",
+      "terrain": "desert",
+      "gravity": "1 standard",
+      "orbital_period": "304",
+      "population": "200000",
+      "url": "https://www.swapi.tech/api/planets/1"
+    },
+    "_id": "5f7254c11b7dfa00041c6fae",
+    "description": "A planet.",
+    "uid": "1",
+    "__v": 2
+  },
+  "apiVersion": "1.0",
+  "timestamp": "2026-11-09T06:40:45.588Z",
+  "support": {
+    "contact": "admin@swapi.tech"
+  }
+}

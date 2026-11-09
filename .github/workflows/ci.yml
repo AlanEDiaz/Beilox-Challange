@@ -1,0 +1,114 @@
+name: CI
+
+on:
+  schedule:
+    # Mondays 15:00 ART (UTC-3, no DST in Argentina) = 18:00 UTC. GitHub cron is always UTC.
+    - cron: '0 18 * * 1'
+  workflow_dispatch:
+  pull_request:
+
+# A newer run on the same ref replaces the one in progress (scheduled runs share one group).
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '24'
+  CI: 'true'
+
+jobs:
+  quality:
+    name: Typecheck, lint, format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npm run quality
+
+  api:
+    name: API (swapi.tech)
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      # Serial on purpose: swapi.tech rate-limits per IP (see README, "Decisiones técnicas").
+      - run: npm run test:api
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-api
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+      - name: Upload happy-path JSON
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: happy-path-json
+          path: data/happy-path/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+  ui:
+    name: UI (${{ matrix.browser }})
+    needs: quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      # One browser failing must not hide the result of the others.
+      fail-fast: false
+      matrix:
+        # Pull requests: fast feedback on Chromium only. Schedule/manual: full engine matrix.
+        browser: ${{ fromJSON(github.event_name == 'pull_request' && '["chromium"]' || '["chromium","firefox","webkit"]') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps ${{ matrix.browser }}
+      - run: npx playwright test --project=ui-${{ matrix.browser }}
+      - name: Upload test results
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: results-ui-${{ matrix.browser }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 14
+
+  summary:
+    name: Run summary
+    needs: [api, ui]
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: results-*
+          path: all-results
+      # Node 24 runs TypeScript directly (type stripping): no build step, no extra dependency.
+      - run: node scripts/ci-summary.ts all-results >> "$GITHUB_STEP_SUMMARY"
