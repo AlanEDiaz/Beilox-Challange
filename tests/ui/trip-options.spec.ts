@@ -1,6 +1,7 @@
 import { test } from '@ui/fixtures/ui.fixture';
 import { addDaysWithinMonth } from '@ui/data/dates';
 import { BUENOS_AIRES_TO_MAR_DEL_PLATA, reverseRoute } from '@ui/data/routes';
+import { REQ } from '../support/tags';
 import type { Departure } from '@ui/pages/search/search.page';
 
 const ROUTE = BUENOS_AIRES_TO_MAR_DEL_PLATA;
@@ -20,14 +21,18 @@ test.describe('Trip options', { tag: ['@ui', '@regression'] }, () => {
     await searchPage.verify.placesAreSwapped(ROUTE);
   });
 
-  test('searches the reversed route', async ({ searchPage, resultsPage }) => {
-    const reversed = reverseRoute(ROUTE);
-    const departure = await searchPage.searchTrip(reversed, DEPARTURE_DAY);
+  test(
+    'searches the reversed route',
+    { tag: [REQ.coherentResults] },
+    async ({ searchPage, resultsPage }) => {
+      const reversed = reverseRoute(ROUTE);
+      const departure = await searchPage.searchTrip(reversed, DEPARTURE_DAY);
 
-    await resultsPage.verify.urlMatchesSearch(reversed, departure);
-    await resultsPage.verify.showsRoute(reversed);
-    await resultsPage.verify.listsOnlyServicesFor(reversed);
-  });
+      await resultsPage.verify.urlMatchesSearch(reversed, departure);
+      await resultsPage.verify.showsRoute(reversed);
+      await resultsPage.verify.listsOnlyServicesFor(reversed);
+    },
+  );
 
   test.describe('round trip', () => {
     test('blocks return days before the departure', async ({ searchPage }) => {
@@ -38,28 +43,36 @@ test.describe('Trip options', { tag: ['@ui', '@regression'] }, () => {
       await searchPage.verify.returnCalendarBlocksDaysBeforeDeparture();
     });
 
-    test('keeps both dates in the results URL', async ({ searchPage, resultsPage }) => {
-      const { departure, returnDate } = await searchPage.searchRoundTrip(
-        ROUTE,
-        DEPARTURE_DAY,
-        RETURN_DAY,
-      );
+    test(
+      'keeps both dates in the results URL',
+      { tag: [REQ.coherentResults] },
+      async ({ searchPage, resultsPage }) => {
+        const { departure, returnDate } = await searchPage.searchRoundTrip(
+          ROUTE,
+          DEPARTURE_DAY,
+          RETURN_DAY,
+        );
+
+        await resultsPage.verify.urlMatchesSearch(ROUTE, departure);
+        await resultsPage.verify.urlHasReturnDate(returnDate);
+        await resultsPage.verify.listsOnlyServicesFor(ROUTE);
+      },
+    );
+  });
+
+  test(
+    'carries the passenger count to the results',
+    { tag: [REQ.coherentResults] },
+    async ({ searchPage, resultsPage }) => {
+      const passengers = 3;
+      await searchPage.selectPassengers(passengers);
+      await searchPage.verify.passengersAre(passengers);
+      const departure = await searchPage.searchTrip(ROUTE, DEPARTURE_DAY);
 
       await resultsPage.verify.urlMatchesSearch(ROUTE, departure);
-      await resultsPage.verify.urlHasReturnDate(returnDate);
-      await resultsPage.verify.listsOnlyServicesFor(ROUTE);
-    });
-  });
-
-  test('carries the passenger count to the results', async ({ searchPage, resultsPage }) => {
-    const passengers = 3;
-    await searchPage.selectPassengers(passengers);
-    await searchPage.verify.passengersAre(passengers);
-    const departure = await searchPage.searchTrip(ROUTE, DEPARTURE_DAY);
-
-    await resultsPage.verify.urlMatchesSearch(ROUTE, departure);
-    await resultsPage.verify.urlHasPassengers(passengers);
-  });
+      await resultsPage.verify.urlHasPassengers(passengers);
+    },
+  );
 
   test.describe('results page', () => {
     let departure: Departure;

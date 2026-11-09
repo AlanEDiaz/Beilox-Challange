@@ -1,11 +1,13 @@
 /**
  * Pushes one metrics sample per suite to Grafana Cloud (Influx line protocol endpoint).
- * Usage: node scripts/push-metrics.ts <results dir> [--dry-run]  (dry run prints the samples)
+ * Usage: node scripts/push-metrics.ts <results dir> [--coverage <summary.json>] [--dry-run]
+ * (dry run prints the samples instead of sending them)
  *
  * Env: GRAFANA_INFLUX_URL, GRAFANA_INFLUX_USER, GRAFANA_INFLUX_TOKEN (GitHub secrets).
  * Without them the script exits 0 and says so, so forks and local runs never fail on it.
  * Grafana turns measurement `playwright_run` + field `passed` into metric `playwright_run_passed`.
  */
+import { existsSync, readFileSync } from 'node:fs';
 import { percentile, readSuiteReports } from './lib/report.ts';
 
 const root = process.argv[2];
@@ -50,6 +52,17 @@ const lines = suites.map((suite) => {
     .join(',');
   return `playwright_run,suite=${tag(suite.name)},event=${event},ref=${ref} ${body}`;
 });
+
+// Optional coverage sample (written by scripts/coverage-report.ts --out).
+const coverageIndex = process.argv.indexOf('--coverage');
+const coveragePath = coverageIndex === -1 ? undefined : process.argv[coverageIndex + 1];
+if (coveragePath !== undefined && existsSync(coveragePath)) {
+  const coverage = JSON.parse(readFileSync(coveragePath, 'utf8')) as Record<string, number>;
+  const body = Object.entries(coverage)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(',');
+  lines.push(`playwright_coverage,event=${event},ref=${ref} ${body}`);
+}
 
 if (lines.length === 0) {
   console.log('No reports found: nothing to push.');

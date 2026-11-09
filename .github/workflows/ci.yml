@@ -46,7 +46,8 @@ jobs:
           cache: npm
       - run: npm ci
       # Serial on purpose: swapi.tech rate-limits per IP (see README, "Decisiones técnicas").
-      - run: npm run test:api
+      # c8 collects V8 coverage of src/ from every Playwright worker (see .c8rc.json).
+      - run: npx c8 npm run test:api
       - name: Upload test results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -56,6 +57,14 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+      - name: Upload raw coverage
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-raw-api
+          path: coverage/tmp
+          if-no-files-found: warn
+          retention-days: 7
       - name: Upload happy-path JSON
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -84,7 +93,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps ${{ matrix.browser }}
-      - run: npx playwright test --project=ui-${{ matrix.browser }}
+      - run: npx c8 npx playwright test --project=ui-${{ matrix.browser }}
       - name: Upload test results
         if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
@@ -94,29 +103,53 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 14
+      - name: Upload raw coverage
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-raw-ui-${{ matrix.browser }}
+          path: coverage/tmp
+          if-no-files-found: warn
+          retention-days: 7
 
   summary:
-    name: Run summary
+    name: Run summary and coverage
     needs: [api, ui]
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+      - run: npm ci
       - uses: actions/download-artifact@v4
         with:
           pattern: results-*
           path: all-results
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-raw-*
+          path: coverage/tmp
+          merge-multiple: true
       # Node 24 runs TypeScript directly (type stripping): no build step, no extra dependency.
       - run: node scripts/ci-summary.ts all-results >> "$GITHUB_STEP_SUMMARY"
+      # Raw V8 dumps from every job are merged by c8 and mapped back to the TypeScript sources.
+      - run: npx c8 report
+      # The gate (100% requirements and API contract) applies to full runs; a pull request only
+      # runs Chromium, so it reports without enforcing.
+      - name: Coverage report
+        run: |
+          ENFORCE=""
+          if [ "${{ github.event_name }}" != "pull_request" ]; then ENFORCE="--enforce"; fi
+          node scripts/coverage-report.ts all-results             --c8 coverage/c8/coverage-summary.json             --out coverage/summary.json $ENFORCE >> "$GITHUB_STEP_SUMMARY"
       # Pull requests are not pushed: only scheduled/manual runs feed the dashboard trend.
       - name: Push metrics to Grafana Cloud
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ !cancelled() && github.event_name != 'pull_request' }}
         env:
           GRAFANA_INFLUX_URL: ${{ secrets.GRAFANA_INFLUX_URL }}
           GRAFANA_INFLUX_USER: ${{ secrets.GRAFANA_INFLUX_USER }}
           GRAFANA_INFLUX_TOKEN: ${{ secrets.CHALLANGETOKEN }}
-        run: node scripts/push-metrics.ts all-results
+        run: node scripts/push-metrics.ts all-results --coverage coverage/summary.json

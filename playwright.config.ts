@@ -2,6 +2,9 @@ import { defineConfig, devices } from '@playwright/test';
 import { env } from './src/shared/config/env';
 
 const isCI = Boolean(process.env['CI']);
+// The JSON report feeds the CI summary, coverage matrix and Grafana metrics.
+const jsonOutput = process.env['PW_JSON_OUTPUT'] ?? 'test-results/results.json';
+const writeJson = isCI || process.env['PW_JSON_OUTPUT'] !== undefined;
 
 export default defineConfig({
   testDir: './tests',
@@ -12,8 +15,8 @@ export default defineConfig({
   workers: 2,
   timeout: 30_000,
   expect: { timeout: 10_000 },
-  reporter: isCI
-    ? [['list'], ['html', { open: 'never' }], ['json', { outputFile: 'test-results/results.json' }]]
+  reporter: writeJson
+    ? [['list'], ['html', { open: 'never' }], ['json', { outputFile: jsonOutput }]]
     : [['list'], ['html', { open: 'never' }]],
   use: {
     trace: 'on-first-retry',

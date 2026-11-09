@@ -9,6 +9,7 @@ import {
   expectWithinBudget,
 } from '@api/helpers/assertions';
 import { saveHappyPath } from '@api/helpers/happy-path-store';
+import { CHECK } from '../../support/tags';
 import { errorEnvelope, paginatedListEnvelope } from '@api/schemas/envelope.schema';
 
 export interface ResourceSuiteConfig {
@@ -36,7 +37,7 @@ export function defineResourceSuite(config: ResourceSuiteConfig): void {
   test.describe(`/${resource}`, { tag: '@api' }, () => {
     test(
       `GET /${resource} returns the list`,
-      { tag: '@smoke' },
+      { tag: ['@smoke', CHECK.list, CHECK.schema, CHECK.time] },
       async ({ swapi, maxResponseMs }) => {
         const result = await swapi.list(resource);
 
@@ -49,7 +50,7 @@ export function defineResourceSuite(config: ResourceSuiteConfig): void {
 
     test(
       `GET /${resource}/${existingId} returns the item (happy path)`,
-      { tag: '@smoke' },
+      { tag: ['@smoke', CHECK.happy, CHECK.schema, CHECK.time, CHECK.json] },
       async ({ swapi, maxResponseMs }) => {
         const result = await swapi.getById(resource, existingId);
 
@@ -62,67 +63,71 @@ export function defineResourceSuite(config: ResourceSuiteConfig): void {
       },
     );
 
-    test(`GET /${resource}/${UNKNOWN_ID} returns 404 for an unknown id`, async ({
-      swapi,
-      maxResponseMs,
-    }) => {
-      const result = await swapi.getById(resource, UNKNOWN_ID);
+    test(
+      `GET /${resource}/${UNKNOWN_ID} returns 404 for an unknown id`,
+      { tag: [CHECK.notFound, CHECK.schema, CHECK.time] },
+      async ({ swapi, maxResponseMs }) => {
+        const result = await swapi.getById(resource, UNKNOWN_ID);
 
-      expectStatus(result, 404);
-      expectSchema(errorEnvelope, result.body);
-      expectWithinBudget(result, maxResponseMs);
-      annotateUpstreamTypo(resource, result.body);
-    });
+        expectStatus(result, 404);
+        expectSchema(errorEnvelope, result.body);
+        expectWithinBudget(result, maxResponseMs);
+        annotateUpstreamTypo(resource, result.body);
+      },
+    );
 
-    test(`GET /${resource}/<non-numeric> returns 404, not 400`, async ({
-      swapi,
-      maxResponseMs,
-    }) => {
-      const result = await swapi.getById(resource, NON_NUMERIC_ID);
+    test(
+      `GET /${resource}/<non-numeric> returns 404, not 400`,
+      { tag: [CHECK.invalidId, CHECK.schema, CHECK.time] },
+      async ({ swapi, maxResponseMs }) => {
+        const result = await swapi.getById(resource, NON_NUMERIC_ID);
 
-      // Observed contract: the API never answers 400; a malformed id is just "not found".
-      expectStatus(result, 404);
-      expectSchema(errorEnvelope, result.body);
-      expectWithinBudget(result, maxResponseMs);
-    });
+        // Observed contract: the API never answers 400; a malformed id is just "not found".
+        expectStatus(result, 404);
+        expectSchema(errorEnvelope, result.body);
+        expectWithinBudget(result, maxResponseMs);
+      },
+    );
 
     if (paginated) {
-      test(`GET /${resource}?page=2&limit=5 paginates consistently`, async ({
-        swapi,
-        maxResponseMs,
-      }) => {
-        const result = await swapi.list(resource, { page: 2, limit: 5 });
+      test(
+        `GET /${resource}?page=2&limit=5 paginates consistently`,
+        { tag: [CHECK.pagination, CHECK.schema, CHECK.time] },
+        async ({ swapi, maxResponseMs }) => {
+          const result = await swapi.list(resource, { page: 2, limit: 5 });
 
-        expectStatus(result, 200);
-        expectSchema(listSchema, result.body);
-        expectWithinBudget(result, maxResponseMs);
+          expectStatus(result, 200);
+          expectSchema(listSchema, result.body);
+          expectWithinBudget(result, maxResponseMs);
 
-        const body = result.body as PaginatedBody;
-        const uids = body.results.map((r) => Number(r.uid));
-        expect(body.results).toHaveLength(5);
-        expect(body.total_pages).toBe(Math.ceil(body.total_records / 5));
-        expect(body.previous).toContain('page=1');
-        expect(body.next).toContain('page=3');
-        // Page 2 must not repeat page 1's items: ids are unique and ascending.
-        expect(uids).toEqual([...new Set(uids)].sort((x, y) => x - y));
-        expect(Math.min(...uids)).toBeGreaterThan(5);
-      });
+          const body = result.body as PaginatedBody;
+          const uids = body.results.map((r) => Number(r.uid));
+          expect(body.results).toHaveLength(5);
+          expect(body.total_pages).toBe(Math.ceil(body.total_records / 5));
+          expect(body.previous).toContain('page=1');
+          expect(body.next).toContain('page=3');
+          // Page 2 must not repeat page 1's items: ids are unique and ascending.
+          expect(uids).toEqual([...new Set(uids)].sort((x, y) => x - y));
+          expect(Math.min(...uids)).toBeGreaterThan(5);
+        },
+      );
 
-      test(`GET /${resource} with invalid paging params falls back to defaults`, async ({
-        swapi,
-        maxResponseMs,
-      }) => {
-        const result = await swapi.list(resource, { page: 'abc' });
+      test(
+        `GET /${resource} with invalid paging params falls back to defaults`,
+        { tag: [CHECK.pagination, CHECK.schema, CHECK.time] },
+        async ({ swapi, maxResponseMs }) => {
+          const result = await swapi.list(resource, { page: 'abc' });
 
-        // Observed contract: no 400 validation; bad params are ignored and defaults apply.
-        expectStatus(result, 200);
-        expectSchema(listSchema, result.body);
-        expectWithinBudget(result, maxResponseMs);
+          // Observed contract: no 400 validation; bad params are ignored and defaults apply.
+          expectStatus(result, 200);
+          expectSchema(listSchema, result.body);
+          expectWithinBudget(result, maxResponseMs);
 
-        const body = result.body as PaginatedBody;
-        expect(body.previous).toBeNull();
-        expect(body.results).toHaveLength(10);
-      });
+          const body = result.body as PaginatedBody;
+          expect(body.previous).toBeNull();
+          expect(body.results).toHaveLength(10);
+        },
+      );
     }
   });
 }

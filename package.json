@@ -9,6 +9,7 @@
     "test:ui": "playwright test --project=ui-chromium --project=ui-firefox --project=ui-webkit",
     "test:ui:chromium": "playwright test --project=ui-chromium",
     "test:api": "playwright test --project=api --workers=1",
+    "coverage": "node scripts/run-coverage.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "format": "prettier --write .",
@@ -17,7 +18,7 @@
     "report": "playwright show-report"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -25,6 +26,7 @@
     "@types/node": "^26.6.6",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
+    "c8": "^12.0.0",
     "dotenv": "^18.0.10",
     "eslint": "^10.14.0",
     "eslint-plugin-playwright": "^2.12.2",

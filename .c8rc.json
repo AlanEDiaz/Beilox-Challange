@@ -1,0 +1,8 @@
+{
+  "include": ["src/**"],
+  "all": true,
+  "src": ["."],
+  "temp-directory": "coverage/tmp",
+  "reports-dir": "coverage/c8",
+  "reporter": ["json-summary", "text-summary"]
+}

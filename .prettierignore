@@ -9,3 +9,4 @@ package-lock.json
 .mcp.json
 .playwright-mcp
 TEST_PLAN.md
+all-results
