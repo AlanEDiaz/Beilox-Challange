@@ -10,6 +10,8 @@ interface PwResult {
 interface PwTest {
   readonly status: TestStatus;
   readonly projectName: string;
+  /** `test.fail()` adds an annotation of type "fail": the test documents a known, open gap. */
+  readonly annotations?: readonly { readonly type: string }[];
   readonly results: readonly PwResult[];
 }
 interface PwSpec {
@@ -44,6 +46,8 @@ export interface SpecRecord {
   readonly tags: readonly string[];
   /** True for passed and flaky (passed on retry); flaky ones are reported separately. */
   readonly passed: boolean;
+  /** Marked with `test.fail()` and still failing as expected: an open, documented gap. */
+  readonly openGap: boolean;
 }
 
 export interface SuiteReport {
@@ -86,6 +90,9 @@ function records(suites: readonly PwSuite[], chain: readonly string[] = []): Spe
         describes,
         tags: spec.tags ?? [],
         passed: test.status === 'expected' || test.status === 'flaky',
+        openGap:
+          test.status === 'expected' &&
+          (test.annotations ?? []).some((annotation) => annotation.type === 'fail'),
       })),
     );
     return [...own, ...records(suite.suites ?? [], describes)];

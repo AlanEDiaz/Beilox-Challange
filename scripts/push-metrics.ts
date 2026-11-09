@@ -53,6 +53,27 @@ const lines = suites.map((suite) => {
   return `playwright_run,suite=${tag(suite.name)},event=${event},ref=${ref} ${body}`;
 });
 
+// Open security gaps per target: tests marked test.fail() that still fail as expected. The suite
+// reports 100% pass rate by design, so this is the number that shows the real security posture.
+// The first describe block is named "<target> ...", e.g. "swapi security headers".
+for (const suite of suites.filter((s) => s.name === 'security')) {
+  const byTarget = new Map<string, { gaps: number; checks: number }>();
+  // The offline CSP evaluator tests (@sec-csp) check our own code, not a target.
+  for (const spec of suite.specs.filter((s) => !s.tags.includes('sec-csp'))) {
+    const target = tag(spec.describes[0]?.split(' ')[0]);
+    const entry = byTarget.get(target) ?? { gaps: 0, checks: 0 };
+    byTarget.set(target, {
+      gaps: entry.gaps + (spec.openGap ? 1 : 0),
+      checks: entry.checks + 1,
+    });
+  }
+  for (const [target, { gaps, checks }] of byTarget) {
+    lines.push(
+      `playwright_security,target=${target},event=${event},ref=${ref} open_gaps=${gaps},checks=${checks}`,
+    );
+  }
+}
+
 // Optional coverage sample (written by scripts/coverage-report.ts --out).
 const coverageIndex = process.argv.indexOf('--coverage');
 const coveragePath = coverageIndex === -1 ? undefined : process.argv[coverageIndex + 1];
