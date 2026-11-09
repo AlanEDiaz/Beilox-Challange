@@ -246,7 +246,7 @@ flowchart LR
 
 ### Dashboard en Grafana Cloud
 
-Cada corrida programada o manual envía métricas (formato Influx line protocol) con `scripts/push-metrics.ts`. El dashboard [`dashboards/grafana-qa.json`](dashboards/grafana-qa.json) muestra tasa de aprobación, fallidos, _flaky_, duración de la suite, p50/p95 por test y los tres ejes de cobertura, filtrable por suite (`api`, `ui-chromium`, `ui-firefox`, `ui-webkit`).
+Cada corrida programada o manual envía métricas (formato Influx line protocol) con `scripts/push-metrics.ts`. El dashboard [`dashboards/grafana-qa.json`](dashboards/grafana-qa.json) muestra tasa de aprobación, fallidos, _flaky_, duración de la suite, p50/p95 por test y los tres ejes de cobertura, con una serie por suite (`api`, `ui-chromium`, `ui-firefox`, `ui-webkit`). El rango por defecto es de **7 días**. No hay filtro por suite porque los dashboards públicos de Grafana no admiten variables, y los rangos de 14 días o más dejaron de mostrar las series en las pruebas hechas contra este stack (causa sin resolver).
 
 Configuración (una vez):
 
