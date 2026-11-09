@@ -82,7 +82,8 @@
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value_and_name"
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "stat",
@@ -138,7 +139,8 @@
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value_and_name"
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "stat",
@@ -194,7 +196,8 @@
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value_and_name"
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "stat",
@@ -246,7 +249,8 @@
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value_and_name"
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "timeseries",
@@ -283,7 +287,8 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "pointSize": 10
           },
           "max": 100,
           "min": 0
@@ -298,7 +303,8 @@
         "tooltip": {
           "mode": "multi"
         }
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "timeseries",
@@ -335,7 +341,8 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "pointSize": 10
           }
         },
         "overrides": []
@@ -348,7 +355,8 @@
         "tooltip": {
           "mode": "multi"
         }
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "timeseries",
@@ -385,7 +393,8 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "pointSize": 10
           }
         },
         "overrides": []
@@ -398,7 +407,8 @@
         "tooltip": {
           "mode": "multi"
         }
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "timeseries",
@@ -435,7 +445,8 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "pointSize": 10
           }
         },
         "overrides": []
@@ -448,7 +459,8 @@
         "tooltip": {
           "mode": "multi"
         }
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "timeseries",
@@ -485,7 +497,8 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "pointSize": 10
           }
         },
         "overrides": []
@@ -498,7 +511,8 @@
         "tooltip": {
           "mode": "multi"
         }
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "timeseries",
@@ -535,7 +549,8 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "pointSize": 10
           }
         },
         "overrides": []
@@ -548,7 +563,8 @@
         "tooltip": {
           "mode": "multi"
         }
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "stat",
@@ -609,7 +625,8 @@
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value"
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "stat",
@@ -670,7 +687,8 @@
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value"
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "stat",
@@ -731,7 +749,8 @@
         "colorMode": "background",
         "graphMode": "none",
         "textMode": "value"
-      }
+      },
+      "timeFrom": "7d"
     },
     {
       "type": "timeseries",
@@ -788,7 +807,8 @@
             "drawStyle": "line",
             "lineWidth": 2,
             "showPoints": "always",
-            "spanNulls": true
+            "spanNulls": true,
+            "pointSize": 10
           }
         },
         "overrides": []
@@ -801,7 +821,8 @@
         "tooltip": {
           "mode": "multi"
         }
-      }
+      },
+      "timeFrom": "7d"
     }
   ]
 }
