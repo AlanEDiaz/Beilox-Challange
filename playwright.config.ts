@@ -41,6 +41,12 @@ export default defineConfig({
       },
     })),
     {
+      // Passive security checks (headers, cookies, CSP, mixed content); see README, "Seguridad".
+      name: 'security',
+      testMatch: 'security/**/*.spec.ts',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
       name: 'api',
       testMatch: 'api/**/*.spec.ts',
       use: {

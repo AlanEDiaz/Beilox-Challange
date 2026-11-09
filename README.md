@@ -148,8 +148,9 @@ Regla de dependencias: los specs solo conocen fixtures y datos; las acciones usa
 ├── tests/
 │   ├── api/ (+ support/resource-suite.ts)
 │   ├── ui/
+│   ├── security/ (+ support/)       # cabeceras, CSP, cookies, contenido mixto (pasivo)
 │   └── support/tags.ts              # tags de cobertura tipados
-├── playwright.config.ts             # proyectos: api, ui-chromium, ui-firefox, ui-webkit
+├── playwright.config.ts             # proyectos: api, security, ui-chromium, ui-firefox, ui-webkit
 └── .c8rc.json                       # cobertura V8 del framework
 ```
 
@@ -218,6 +219,23 @@ Framework code coverage: lines 97.69%, branches 91.85%
 ```
 
 La salida completa se publica en el resumen de cada corrida de Actions, y los tres valores se envían a Grafana.
+
+### Seguridad (pruebas pasivas)
+
+El proyecto `security` (`npm run test:security`, 22 tests, unos 6 s) revisa solo lo que centraldepasajes.com.ar y swapi.tech ya envían a cualquier visitante: una carga de página y una petición HTTP por sitio, las mismas que haría un navegador.
+
+| Área            | Qué verifica                                                                                                                                                 |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Cabeceras       | HSTS (≥ 180 días), `X-Content-Type-Options: nosniff`, `Referrer-Policy`, anti-clickjacking (`X-Frame-Options` o `frame-ancestors`), sin `X-Powered-By`       |
+| CSP             | Que exista y no permita `*`, `'unsafe-eval'`, `data:`, ni `'unsafe-inline'` sin nonce o hash. El evaluador (`support/csp.ts`) tiene 6 tests propios, sin red |
+| Transporte      | Redirección de HTTP a HTTPS; sin contenido mixto durante la carga                                                                                            |
+| Cookies         | La cookie de sesión de centraldepasajes es `Secure`, `HttpOnly` y `SameSite` Lax o Strict                                                                    |
+| CORS            | Que `Access-Control-Allow-Origin: *` nunca se combine con credenciales                                                                                       |
+| Preparación CSP | Adjunta a cada corrida un inventario de scripts inline y de hosts de terceros: es el punto de partida para escribir una política real                        |
+
+**Hallazgos reales (observados el 2026-11-09).** Ninguno de los dos sitios envía CSP, HSTS ni `nosniff`; ambos exponen `X-Powered-By` (ASP.NET y Express); la cookie `ASP.NET_SessionId` usa `SameSite=None`; y swapi.tech responde 200 por HTTP sin redirigir a HTTPS. Estos gaps están declarados en `tests/security/support/targets.ts` y sus tests usan `test.fail()`: quedan en verde mientras el gap exista y se ponen en rojo cuando el dueño lo corrige (señal para borrar la entrada). Cualquier regresión nueva falla normalmente. Es un trinquete, no una forma de esconder fallos.
+
+**Qué no se hizo, a propósito.** No se ejecuta DAST activo (escaneo activo de OWASP ZAP, fuzzing, inyección de payloads) ni pentesting contra estos sitios: son sistemas de terceros en producción y no hay autorización del dueño. Un escaneo así puede disparar alertas, bloquear la IP del runner o tumbar un servicio público. Para un sistema propio, el paso siguiente sería ejecutar ZAP baseline/full scan en un entorno de staging contra una URL autorizada, y subir su reporte como artefacto del mismo pipeline. Tampoco hay escaneo de dependencias ni de secretos; `npm audit` y GitHub secret scanning se pueden activar sin cambios de código.
 
 ## 6. CI/CD y dashboard
 
