@@ -112,3 +112,11 @@ jobs:
           path: all-results
       # Node 24 runs TypeScript directly (type stripping): no build step, no extra dependency.
       - run: node scripts/ci-summary.ts all-results >> "$GITHUB_STEP_SUMMARY"
+      # Pull requests are not pushed: only scheduled/manual runs feed the dashboard trend.
+      - name: Push metrics to Grafana Cloud
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          GRAFANA_INFLUX_URL: ${{ secrets.GRAFANA_INFLUX_URL }}
+          GRAFANA_INFLUX_USER: ${{ secrets.GRAFANA_INFLUX_USER }}
+          GRAFANA_INFLUX_TOKEN: ${{ secrets.CHALLANGETOKEN }}
+        run: node scripts/push-metrics.ts all-results
